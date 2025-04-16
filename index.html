@@ -9,13 +9,13 @@
     /* Container for dynamic graph or globe */
     #right-display {
       width: 100%;
-      height: calc(100vh - 150px); /* full available height (header + footer accounted) */
+      height: calc(100vh - 150px); /* available height accounting for header & footer */
       position: relative;
       overflow: hidden;
       transition: opacity 0.5s ease;
       box-sizing: border-box;
     }
-    /* Update layout: poem occupies 30% and the dynamic graph area occupies 70% */
+    /* Update layout: poem occupies 30% and dynamic graph area occupies 70% */
     .left-column {
       flex: 0 0 30%;
     }
@@ -25,7 +25,13 @@
       margin: 0;
       padding: 0;
     }
-    /* Center the globe within the right display */
+    /* Make sure iframe content starts at the top */
+    .right-column iframe {
+      display: block;
+      margin: 0 auto; /* centers horizontally */
+      vertical-align: top;
+    }
+    /* (Keep your globe styling as needed; only if it’s active) */
     #globe {
       position: absolute;
       width: 300px;
@@ -45,14 +51,7 @@
         -45px -45px 25px rgba(0, 0, 0, 0.5) inset, 
         25px 25px 45px rgba(0, 0, 0, 0.45) inset;
     }
-    /* Optional: center iframe or globe content within the right-column */
-    .right-column iframe,
-    .right-column #globe {
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
-    }
-  </style>
+  </style>  
 </head>
 <body>
   <header>

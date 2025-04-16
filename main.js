@@ -25,7 +25,7 @@ let keyframes = [
   { activeVerse: 5, activeLines: [4] }
 ];
 
-// Global variable to track current displayed right‑column content
+// Global variable to track currently displayed right‑column content
 let currentGraph = "earth";  // starts with Earth
 
 // Set up navigation buttons
@@ -42,23 +42,24 @@ document.addEventListener("wheel", function(event) {
   updateGlobeRotation(event.deltaY);
 });
 
-// Globe rotation: update background if the globe is visible.
+// Globe rotation: update background position if globe is visible.
 let globeRotation = 0;
 function updateGlobeRotation(deltaY) {
   const globe = document.getElementById("globe");
-  if (!globe) return;
+  if (!globe) return; // only update if the Earth is shown
   globeRotation += deltaY * 0.5;
   globe.style.backgroundPosition = `${globeRotation}px 0`;
 }
 
-// Reset all active lines
+// Reset all active lines.
 function resetActiveLines() {
   document.querySelectorAll(".line").forEach(line => {
     line.classList.remove("active-line");
   });
 }
 
-// Update active verse and scroll left column so that active verse is centered.
+// Update the active verse: remove active-verse from all verses and add to current one.
+// Also scroll the left column so that the active verse is centered.
 function updateActiveVerse(id) {
   document.querySelectorAll(".verse").forEach(verse => {
     verse.classList.remove("active-verse");
@@ -81,7 +82,7 @@ function updateActiveLine(vid, lid) {
   }
 }
 
-// Smoothly scroll the left column so the active verse is centered.
+// Smoothly scroll the left column so that the active verse is centered.
 function scrollLeftColumnToActiveVerse(id) {
   const leftColumn = document.querySelector(".left-column-content");
   const activeVerse = document.getElementById("verse" + id);
@@ -96,8 +97,8 @@ function scrollLeftColumnToActiveVerse(id) {
   }
 }
 
-// Draw (or update) the current keyframe: highlight active verse and line,
-// and update right-column content accordingly.
+// Draw (or update) the current keyframe: highlight the active verse and line,
+// and update the right-column content accordingly.
 function drawKeyframe(kfi) {
   const kf = keyframes[kfi];
   resetActiveLines();
@@ -116,7 +117,7 @@ function forwardClicked() {
   }
 }
 
-// Go back to the previous keyframe.
+// Move back to the previous keyframe.
 function backwardClicked() {
   if (keyframeIndex > 0) {
     keyframeIndex--;
@@ -154,6 +155,7 @@ function updateRightColumnContent(verseNumber) {
     // Clear the container.
     rightDisplay.innerHTML = "";
     if (graphType === "earth") {
+      // Insert the globe element.
       var globeDiv = document.createElement("div");
       globeDiv.id = "globe";
       rightDisplay.appendChild(globeDiv);
@@ -162,13 +164,12 @@ function updateRightColumnContent(verseNumber) {
       var iframe = document.createElement("iframe");
       iframe.src = graphType + ".html"; // e.g., "river.html", "tree.html", "air.html"
       iframe.setAttribute("scrolling", "no"); // disable internal scrolling
-      // Instead of filling 100% of container, we enlarge it so that after scaling it all fits.
       iframe.style.border = "none";
       iframe.style.width = "125%";
       iframe.style.height = "125%";
-      // Scale down the iframe content to 80% so the entire page (including slider) is visible.
       iframe.style.transform = "scale(0.8)";
       iframe.style.transformOrigin = "0 0";
+      iframe.style.marginTop = "0"; // ensure it starts at the top
       rightDisplay.appendChild(iframe);
     }
     currentGraph = graphType;

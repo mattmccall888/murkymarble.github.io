@@ -1,0 +1,1 @@
+To run this, simply go into index.html and use live server to run.

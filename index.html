@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scrollytelling: Life on Earth & Pollution</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    /* Container for dynamic graph or globe */
+    #right-display {
+      width: 100%;
+      height: calc(100vh - 150px); /* full available height (header + footer accounted) */
+      position: relative;
+      overflow: hidden;
+      transition: opacity 0.5s ease;
+      box-sizing: border-box;
+    }
+    /* Update layout: poem occupies 30% and the dynamic graph area occupies 70% */
+    .left-column {
+      flex: 0 0 30%;
+    }
+    .right-column {
+      flex: 0 0 70%;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    /* Center the globe within the right display */
+    #globe {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotateX(6deg) rotateY(6deg) rotateZ(6deg);
+      background: url("https://cdn.rawgit.com/ManzDev/cursos-assets/gh-pages/css3/earth-2.jpg");
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #000;
+      border-radius: 50%;
+      box-shadow: 
+        0 0 25px rgba(255, 255, 255, 0.10),
+        -8px -8px 15px #000 inset,
+        2px 2px 25px #000 inset,
+        -45px -45px 25px rgba(0, 0, 0, 0.5) inset, 
+        25px 25px 45px rgba(0, 0, 0, 0.45) inset;
+    }
+    /* Optional: center iframe or globe content within the right-column */
+    .right-column iframe,
+    .right-column #globe {
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 class="title">A Poem on Life, Earth & Pollution</h1>
+  </header>
+  <main class="wrapper">
+    <!-- Left Column: Poem with Scrollytelling -->
+    <div class="left-column">
+      <div class="left-column-content">
+        <div class="filler-verse"></div>
+        <!-- Verse 1 -->
+        <ul class="verse" id="verse1">
+          <li class="line" id="line1">In the vast cosmos, Earth spins with grace,</li>
+          <li class="line" id="line2">A blue gem shining in endless space,</li>
+          <li class="line" id="line3">Nature’s bounty in a gentle embrace,</li>
+          <li class="line" id="line4">Yet hidden perils we must face.</li>
+        </ul>
+        <!-- Verse 2: Water Pollution -->
+        <ul class="verse" id="verse2">
+          <li class="line" id="line1">Waters once vibrant now bear a toxic hue,</li>
+          <li class="line" id="line2">Rivers and streams turn murky from residue,</li>
+          <li class="line" id="line3">Industrial spills and runoff taint the blue,</li>
+          <li class="line" id="line4">A plea for cleansing, for waters pure and true.</li>
+        </ul>
+
+        <!-- Verse 3: Deforestation -->
+        <ul class="verse" id="verse3">
+          <li class="line" id="line1">Forests lush and green are losing their embrace,</li>
+          <li class="line" id="line2">Mighty trees felled, leaving an empty space,</li>
+          <li class="line" id="line3">The whisper of leaves silenced without a trace,</li>
+          <li class="line" id="line4">Nature weeps over her vanishing grace.</li>
+        </ul>
+
+        <!-- Verse 4: Air Pollution -->
+        <ul class="verse" id="verse4">
+          <li class="line" id="line1">Skies once clear now drown in choking smog,</li>
+          <li class="line" id="line2">Air heavy with toxins—a relentless clog,</li>
+          <li class="line" id="line3">Breaths turn shallow under a chemical fog,</li>
+          <li class="line" id="line4">A warning call echoed by the urban cog.</li>
+        </ul>
+        <!-- Verse 5 -->
+        <ul class="verse" id="verse5">
+          <li class="line" id="line1">Rise, restore, let nature reclaim her art,</li>
+          <li class="line" id="line2">Heal the wounds and mend each broken part,</li>
+          <li class="line" id="line3">Together, ignite change with a hopeful heart,</li>
+          <li class="line" id="line4">For Earth is our home—a precious start.</li>
+        </ul>
+        <div class="filler-verse"></div>
+      </div>
+    </div>
+    <!-- Right Column: Dynamic Graphs / Globe -->
+    <div class="right-column">
+      <div id="right-display">
+        <!-- Initially display the centered spinning Earth -->
+        <div id="globe"></div>
+      </div>
+    </div>
+  </main>
+  <footer>
+    <button class="arrow-button" id="backward-button">◄</button>
+    <button class="arrow-button" id="forward-button">►</button>
+  </footer>
+  <script src="main.js"></script>
+</body>
+</html>

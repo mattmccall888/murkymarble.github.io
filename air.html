@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Air Quality Impact Chart (1970–2020)</title>
+  <style>
+    /* A soft sky-like background for an airy feel */
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #a9d6e5, #f0f8ff);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+    .chart-container {
+      background: rgba(255,255,255,0.95);
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    svg {
+      display: block;
+      margin: auto;
+      border: 2px solid #ccc;
+      border-radius: 10px;
+      background: url('https://www.transparenttextures.com/patterns/cubes.png');
+      background-color: #e0f7fa;
+    }
+    .axis line,
+    .axis path {
+      stroke: #777;
+    }
+    .axis text {
+      font-size: 12px;
+      fill: #333;
+    }
+    .axis-label {
+      font-size: 14px;
+      font-weight: bold;
+      fill: #333;
+    }
+    /* Slider styling */
+    .slider-container {
+      margin-top: 20px;
+      text-align: center;
+    }
+    input[type="range"] {
+      width: 300px;
+    }
+    .year-label {
+      font-size: 20px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+    /* Tooltip styling */
+    .tooltip {
+      position: absolute;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-container">
+    <h1>Air Quality Impacts Over Time (1970–2020)</h1>
+    <svg id="airChart" width="700" height="500"></svg>
+  </div>
+  <div class="slider-container">
+    <input type="range" id="yearSlider" min="1970" max="2020" step="1" value="1970">
+    <span class="year-label" id="currentYear">1970</span>
+  </div>
+  <div class="tooltip"></div>
+  
+  <!-- Include D3 v7 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    // GLOBAL VARIABLES
+    let yearData = {};  // will hold data grouped by year
+    const svg = d3.select("#airChart");
+    const svgWidth = +svg.attr("width");
+    const svgHeight = +svg.attr("height");
+    const margin = { top: 40, right: 60, bottom: 60, left: 80 };
+    const chartWidth = svgWidth - margin.left - margin.right;
+    const chartHeight = svgHeight - margin.top - margin.bottom;
+    
+    // Main group for chart elements.
+    const chartGroup = svg.append("g")
+                          .attr("transform", `translate(${margin.left}, ${margin.top})`);
+    
+    // Groups for the axes.
+    const xAxisGroup = chartGroup.append("g")
+                                 .attr("class", "x axis")
+                                 .attr("transform", `translate(0, ${chartHeight})`);
+    const yAxisGroup = chartGroup.append("g")
+                                 .attr("class", "y axis");
+    
+    // Tooltip element.
+    const tooltip = d3.select(".tooltip");
+    
+    // Define color mapping for pollutants.
+    const colorMap = {
+      "PM2.5": "#ff8a80",
+      "PM10": "#ff5252",
+      "NO₂": "#ff1744",
+      "O₃": "#d50000",
+      "SO₂": "#aa00ff",
+      "CO": "#ffa726"
+    };
+    
+    // Scales (to be defined after data load).
+    let xScale, yScale, radiusScale;
+    
+    // Create a group for bubble nodes.
+    let nodesGroup = chartGroup.append("g")
+                               .attr("class", "nodes");
+    
+    // Function to update axes.
+    function updateAxes() {
+      const xAxis = d3.axisBottom(xScale).ticks(5);
+      const yAxis = d3.axisLeft(yScale);
+      xAxisGroup.call(xAxis);
+      yAxisGroup.call(yAxis);
+    
+      // Axis labels.
+      svg.selectAll(".x.axis-label").remove();
+      svg.selectAll(".y.axis-label").remove();
+      svg.append("text")
+         .attr("class", "x axis-label")
+         .attr("x", margin.left + chartWidth/2)
+         .attr("y", svgHeight - 10)
+         .attr("text-anchor", "middle")
+         .attr("fill", "#333")
+         .text("Premature Deaths (in thousands)");
+    
+      svg.append("text")
+         .attr("class", "y axis-label")
+         .attr("x", -(margin.top + chartHeight/2))
+         .attr("y", 20)
+         .attr("transform", "rotate(-90)")
+         .attr("text-anchor", "middle")
+         .attr("fill", "#333")
+         .text("Concentration (µg/m³)");
+    }
+    
+    // Function to update bubbles based on selected year.
+    function updateChart(selectedYear) {
+      const newData = yearData[selectedYear];
+      if (!newData) return;
+    
+      // Bind new data.
+      const nodes = nodesGroup.selectAll(".node")
+                              .data(newData, d => d.pollutant);
+    
+      // Transition existing nodes.
+      nodes.transition().duration(800)
+           .attr("transform", d => `translate(${xScale(d.impact)}, ${yScale(d.concentration)})`);
+    
+      nodes.select("circle").transition().duration(800)
+           .attr("r", d => radiusScale(d.concentration));
+    
+      // Enter any new nodes.
+      const enterNodes = nodes.enter()
+                              .append("g")
+                              .attr("class", "node")
+                              .attr("transform", d => `translate(${xScale(d.impact)}, ${yScale(d.concentration)})`);
+    
+      enterNodes.append("circle")
+                .attr("r", d => radiusScale(d.concentration))
+                .attr("fill", d => colorMap[d.pollutant] || "#ccc")
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 2);
+    
+      enterNodes.append("text")
+                .attr("dy", ".35em")
+                .attr("fill", "#fff")
+                .attr("font-size", "14px")
+                .attr("pointer-events", "none")
+                .attr("text-anchor", "middle")
+                .text(d => d.pollutant);
+    
+      nodes.exit().remove();
+    
+      // Update tooltip behavior.
+      nodesGroup.selectAll(".node")
+                .on("mouseover", (event, d) => {
+                  tooltip.transition().duration(200).style("opacity", 0.9);
+                  tooltip.html(`<strong>${d.pollutant}</strong><br/>Impact: ${d.impact}<br/>Conc.: ${d.concentration}`)
+                         .style("left", (event.pageX + 10) + "px")
+                         .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => {
+                  tooltip.transition().duration(300).style("opacity", 0);
+                });
+    }
+    
+    // Function to load extended CSV data from 1970 to 2020.
+    function loadData() {
+      d3.csv("GlobalAirPollutants_2010-2020.csv", d => ({
+        pollutant: d.pollutant,
+        year: +d.year,
+        concentration: +d.concentration,
+        impact: +d.impact
+      })).then(dataArray => {
+        // Group data by year.
+        const dataByYear = d3.group(dataArray, d => d.year);
+        yearData = Object.fromEntries(dataByYear);
+    
+        // Compute domains for impact and concentration.
+        const allImpact = dataArray.map(d => d.impact);
+        const xDomain = [0, d3.max(allImpact) + 5];
+        xScale = d3.scaleLinear().domain(xDomain).range([0, chartWidth]);
+    
+        const allConcentration = dataArray.map(d => d.concentration);
+        const yDomain = [0, d3.max(allConcentration) + 5];
+        yScale = d3.scaleLinear().domain(yDomain).range([chartHeight, 0]);
+    
+        // Bubble radius scale.
+        radiusScale = d3.scaleSqrt().domain([0, d3.max(allConcentration)]).range([20, 60]);
+    
+        // Update axes.
+        updateAxes();
+    
+        // Initially display data for the starting year (1970).
+        updateChart("1970");
+      }).catch(error => {
+        console.error("Error loading CSV data:", error);
+      });
+    }
+    
+    // Load data.
+    loadData();
+    
+    // Slider setup.
+    const slider = d3.select("#yearSlider");
+    const yearLabel = d3.select("#currentYear");
+    
+    slider.on("input", function() {
+      const selectedYear = this.value;
+      yearLabel.text(selectedYear);
+      updateChart(selectedYear);
+    });
+  </script>
+</body>
+</html>

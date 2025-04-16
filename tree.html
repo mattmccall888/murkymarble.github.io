@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Forest Bar Chart – Trunk Below Axis, Canopy Above</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: 
+         linear-gradient(rgba(0,0,0,0.15), rgba(0,0,0,0.15)),
+         url('https://source.unsplash.com/1600x900/?forest');
+      background-size: cover;
+      background-position: center;
+    }
+    .chart-container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 20px;
+      background: rgba(255,255,255,0.85);
+      border-radius: 10px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    h1 {
+      color: #2e7d32;
+      font-size: 2em;
+      margin-bottom: 10px; /* reduced margin for tighter grouping */
+    }
+    svg {
+      background: #c8e6c9;
+      border: 2px solid #1b5e20;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: block;
+      margin: 0 auto 15px auto; /* add bottom margin to separate from slider */
+    }
+    .axis text {
+      font-size: 14px;
+      fill: #1b5e20;
+    }
+    .tooltip {
+      position: absolute;
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    /* Slider container now inside the white box */
+    .slider-container {
+      margin-top: 10px;
+      text-align: center;
+    }
+    input[type="range"] {
+      width: 80%;  /* adjust width as needed */
+    }
+    .year-label {
+      font-size: 20px;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="chart-container">
+    <h1>Deforestation by Region (1970–2020)</h1>
+    <!-- Insert the slider immediately after the heading and before the chart -->
+    <div class="slider-container">
+      <input type="range" id="yearSlider" min="1970" max="2020" step="1" value="1970">
+      <span class="year-label" id="currentYear">1970</span>
+    </div>
+    <svg id="barChart" width="900" height="600"></svg>
+  </div>
+  <div class="tooltip"></div>
+
+  <!-- D3 -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+    /**********************************************
+     * Load CSV Data: GlobalDeforestation_1970-2020.csv
+     **********************************************/
+    d3.csv("GlobalDeforestation_1970-2020.csv", d => ({
+      region: d.region,
+      year: +d.year,
+      annual: +d.annual_loss_mha,
+      cumulative: +d.cumulative_loss_mha
+    }))
+    .then(data => {
+      // Group data by year
+      const dataByYear = d3.group(data, d => d.year);
+      
+      // Desired x-axis order
+      const regions = [
+        "Africa",
+        "Asia",
+        "Europe",
+        "North America",
+        "South America",
+        "Oceania",
+        "Amazon",
+        "Congo Basin",
+        "Southeast Asian Rainforest",
+        "Boreal Forests"
+      ];
+      
+      const svg = d3.select("#barChart");
+      const width = +svg.attr("width");
+      const height = +svg.attr("height");
+      const margin = { top: 20, right: 40, bottom: 80, left: 60 };
+      const chartWidth = width - margin.left - margin.right;
+      const chartHeight = height - margin.top - margin.bottom;
+
+      // Main chart group
+      const chart = svg.append("g")
+                       .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      // (A) Numeric scale for reference (approx. annual loss).
+      const maxAnnual = d3.max(data, d => d.annual);
+      const yScale = d3.scaleLinear()
+                       .domain([0, maxAnnual + 1])
+                       .range([chartHeight, 0]);
+
+      // (B) Separate tree scale for canopy height
+      //     so the visuals are decoupled from numeric axis.
+      const maxTreeHeight = chartHeight * 0.7;  // limit canopy
+      const treeScale = d3.scaleLinear()
+                          .domain([0, maxAnnual]) // 0 => maxAnnual
+                          .range([0, maxTreeHeight]);
+
+      // x-scale for region categories
+      const xScale = d3.scaleBand()
+                       .domain(regions)
+                       .range([0, chartWidth])
+                       .padding(0.5);
+      
+      // Axes
+      const xAxis = d3.axisBottom(xScale);
+      chart.append("g")
+           .attr("class", "x axis")
+           .attr("transform", `translate(0, ${chartHeight})`)
+           .call(xAxis)
+           .selectAll("text")
+           .attr("transform", "rotate(-40)")
+           .attr("text-anchor", "end");
+      
+      const yAxis = d3.axisLeft(yScale).ticks(6);
+      chart.append("g")
+           .attr("class", "y axis")
+           .call(yAxis);
+
+      // Axis labels
+      svg.append("text")
+         .attr("class", "x axis-label")
+         .attr("x", margin.left + chartWidth / 2)
+         .attr("y", height - 10)
+         .attr("text-anchor", "middle")
+         .attr("fill", "#333")
+         .text("Region");
+
+      svg.append("text")
+         .attr("class", "y axis-label")
+         .attr("x", -(margin.top + chartHeight / 2))
+         .attr("y", 20)
+         .attr("transform", "rotate(-90)")
+         .attr("text-anchor", "middle")
+         .attr("fill", "#333")
+         .text("Annual Loss (Mha)");
+
+      // Gradients
+      const defs = svg.append("defs");
+      
+      const canopyGradient = defs.append("linearGradient")
+                                 .attr("id", "canopyGradient")
+                                 .attr("x1", "0%")
+                                 .attr("y1", "0%")
+                                 .attr("x2", "0%")
+                                 .attr("y2", "100%");
+      canopyGradient.append("stop")
+                    .attr("offset", "0%")
+                    .attr("stop-color", "#66bb6a");
+      canopyGradient.append("stop")
+                    .attr("offset", "100%")
+                    .attr("stop-color", "#2e7d32");
+      
+      const trunkGradient = defs.append("linearGradient")
+                                .attr("id", "trunkGradient")
+                                .attr("x1", "0%")
+                                .attr("y1", "0%")
+                                .attr("x2", "0%")
+                                .attr("y2", "100%");
+      trunkGradient.append("stop")
+                   .attr("offset", "0%")
+                   .attr("stop-color", "#8d6e63");
+      trunkGradient.append("stop")
+                   .attr("offset", "100%")
+                   .attr("stop-color", "#5d4037");
+
+      // Helper: generate canopy points in negative y
+      function generateCanopyPoints(annualLoss) {
+        const points = [];
+        const numPoints = 7;
+        const canopyHt = treeScale(annualLoss);  // how tall the canopy is
+        const canopyWidth = Math.min(canopyHt * 1.2, xScale.bandwidth() * 0.8);
+        for (let i = 0; i < numPoints; i++) {
+          let angle = Math.PI * (i / (numPoints - 1));
+          let x = -Math.cos(angle) * (canopyWidth / 2) + (Math.random() - 0.5) * 3;
+          let y = -Math.sin(angle) * canopyHt + (Math.random() - 0.5) * 3;
+          points.push(`${x},${y}`);
+        }
+        return points.join(" ");
+      }
+
+      // Prepare initial data for year=1970
+      const initialData = dataByYear.get(1970) || [];
+
+      // Create groups for each region
+      const treesGroup = chart.selectAll(".tree")
+                              .data(initialData, d => d.region)
+                              .enter()
+                              .append("g")
+                              .attr("class", "tree")
+                              .attr("transform", d => {
+                                const xPos = xScale(d.region) + xScale.bandwidth()/2;
+                                const yPos = chartHeight;
+                                return `translate(${xPos}, ${yPos})`;
+                              });
+      
+      // For each tree, trunk first then canopy
+      treesGroup.each(function(d) {
+        const group = d3.select(this);
+        const trunkHeightPx = 15;
+        // Trunk
+        group.append("rect")
+             .attr("class", "trunk")
+             .attr("x", -3)
+             .attr("y", 0)
+             .attr("width", 6)
+             .attr("height", 0)
+             .attr("fill", "url(#trunkGradient)")
+             .transition()
+             .duration(1200)
+             .ease(d3.easeCubicOut)
+             .attr("height", trunkHeightPx)
+             .attr("y", 0);
+        // Canopy
+        group.append("polygon")
+             .attr("class", "canopy")
+             .attr("points", "0,0 0,0")
+             .attr("fill", "url(#canopyGradient)")
+             .transition()
+             .duration(1200)
+             .ease(d3.easeCubicOut)
+             .attr("points", generateCanopyPoints(d.annual));
+        // Tooltip
+        group.on("mouseover", function(event, d) {
+          d3.select(".tooltip")
+            .transition().duration(200).style("opacity", 0.9);
+          d3.select(".tooltip")
+            .html(
+              `<strong>${d.region}</strong><br/>` +
+              `Annual Loss: ${d.annual.toFixed(2)} Mha<br/>` +
+              `Cumulative: ${d.cumulative.toFixed(2)} Mha`
+            )
+            .style("left", (event.pageX + 10) + "px")
+            .style("top", (event.pageY - 28) + "px");
+        })
+        .on("mouseout", function() {
+          d3.select(".tooltip").transition().duration(300).style("opacity", 0);
+        });
+      });
+
+      // Update function for slider change
+      function updateTrees(year) {
+        const newData = dataByYear.get(+year) || [];
+        
+        const updateSel = treesGroup.data(newData, d => d.region);
+        
+        updateSel.transition().duration(800)
+                 .attr("transform", d => {
+                   const xPos = xScale(d.region) + xScale.bandwidth() / 2;
+                   const yPos = chartHeight;
+                   return `translate(${xPos}, ${yPos})`;
+                 })
+                 .each(function(d) {
+                   const group = d3.select(this);
+                   group.select(".trunk")
+                        .transition().duration(800)
+                        .attr("x", -3)
+                        .attr("width", 6)
+                        .attr("height", 15)
+                        .attr("y", 0);
+                   group.select(".canopy")
+                        .transition().duration(800)
+                        .attr("points", generateCanopyPoints(d.annual));
+                 });
+      }
+      
+      // Slider logic
+      const slider = d3.select("#yearSlider");
+      const yearLabel = d3.select("#currentYear");
+      
+      slider.on("input", function() {
+        const selectedYear = +this.value;
+        yearLabel.text(selectedYear);
+        updateTrees(selectedYear);
+      });
+    })
+    .catch(err => console.error("Error loading CSV data:", err));
+  </script>
+</body>
+</html>

@@ -3,35 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scrollytelling: Life on Earth & Pollution</title>
+  <title>Scrollytelling: The Murky Marble</title>
   <link rel="stylesheet" href="styles.css" />
   <style>
-    /* Container for dynamic graph or globe */
-    #right-display {
-      width: 100%;
-      height: calc(100vh - 150px); /* available height accounting for header & footer */
-      position: relative;
+    /* Remove global scrolling */
+    html, body {
+      height: 100%;
+      margin: 0;
       overflow: hidden;
-      transition: opacity 0.5s ease;
-      box-sizing: border-box;
     }
-    /* Update layout: poem occupies 30% and dynamic graph area occupies 70% */
+
+    /* Header height is 100px per your design */
+    header {
+      height: 100px;
+    }
+
+    /* Wrapper fills the rest of the viewport below the header */
+    .wrapper {
+      display: flex;
+      height: calc(100vh - 100px);
+    }
+
+    /* Left column: 30% width, relative positioning for footer */
     .left-column {
       flex: 0 0 30%;
+      position: relative;
+      background-color: #f0f0f0;
+      overflow: hidden;
     }
+
+    /* The poem content scrolls within this area */
+    .left-column-content {
+      position: absolute;
+      top: 0;
+      bottom: 50px;               /* leave room for the 50px footer */
+      left: 0;
+      right: 0;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    /* Footer sits at the bottom of the left column */
+    footer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 50px;
+      background-color: #222;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .arrow-button {
+      font-size: 10px;
+      padding: 2px 10px;
+      margin: 0 10px;
+      height: 25px;
+      color: #fff;
+      background: none;
+      border: 1px solid #fff;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+
+    /* Right column: 70% width, no scrolling */
     .right-column {
       flex: 0 0 70%;
+      position: relative;
       overflow: hidden;
-      margin: 0;
-      padding: 0;
     }
-    /* Make sure iframe content starts at the top */
-    .right-column iframe {
-      display: block;
-      margin: 0 auto; /* centers horizontally */
-      vertical-align: top;
+
+    /* Dynamic graph/globe container fills the column */
+    #right-display {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      overflow: hidden;
+      transition: opacity 0.5s ease;
     }
-    /* (Keep your globe styling as needed; only if it’s active) */
+
+    /* Center the globe */
     #globe {
       position: absolute;
       width: 300px;
@@ -45,23 +100,25 @@
       border: 2px solid #000;
       border-radius: 50%;
       box-shadow: 
-        0 0 25px rgba(255, 255, 255, 0.10),
+        0 0 25px rgba(255,255,255,0.10),
         -8px -8px 15px #000 inset,
         2px 2px 25px #000 inset,
-        -45px -45px 25px rgba(0, 0, 0, 0.5) inset, 
-        25px 25px 45px rgba(0, 0, 0, 0.45) inset;
+        -45px -45px 25px rgba(0,0,0,0.5) inset,
+        25px 25px 45px rgba(0,0,0,0.45) inset;
     }
-  </style>  
+  </style>
 </head>
 <body>
   <header>
-    <h1 class="title">A Poem on Life, Earth & Pollution</h1>
+    <h1 class="title">The Murky Marble</h1>
   </header>
+
   <main class="wrapper">
-    <!-- Left Column: Poem with Scrollytelling -->
+    <!-- Left Column (scrollable poem + fixed footer) -->
     <div class="left-column">
       <div class="left-column-content">
         <div class="filler-verse"></div>
+
         <!-- Verse 1 -->
         <ul class="verse" id="verse1">
           <li class="line" id="line1">In the vast cosmos, Earth spins with grace,</li>
@@ -69,6 +126,7 @@
           <li class="line" id="line3">Nature’s bounty in a gentle embrace,</li>
           <li class="line" id="line4">Yet hidden perils we must face.</li>
         </ul>
+
         <!-- Verse 2: Water Pollution -->
         <ul class="verse" id="verse2">
           <li class="line" id="line1">Waters once vibrant now bear a toxic hue,</li>
@@ -92,28 +150,33 @@
           <li class="line" id="line3">Breaths turn shallow under a chemical fog,</li>
           <li class="line" id="line4">A warning call echoed by the urban cog.</li>
         </ul>
-        <!-- Verse 5 -->
+
+        <!-- Verse 5: Restoration -->
         <ul class="verse" id="verse5">
           <li class="line" id="line1">Rise, restore, let nature reclaim her art,</li>
           <li class="line" id="line2">Heal the wounds and mend each broken part,</li>
           <li class="line" id="line3">Together, ignite change with a hopeful heart,</li>
           <li class="line" id="line4">For Earth is our home—a precious start.</li>
         </ul>
+
         <div class="filler-verse"></div>
       </div>
+
+      <!-- Fixed footer WITHIN left-column -->
+      <footer>
+        <button class="arrow-button" id="backward-button">◄</button>
+        <button class="arrow-button" id="forward-button">►</button>
+      </footer>
     </div>
-    <!-- Right Column: Dynamic Graphs / Globe -->
+
+    <!-- Right Column (graphs / globe, non‑scrollable) -->
     <div class="right-column">
       <div id="right-display">
-        <!-- Initially display the centered spinning Earth -->
         <div id="globe"></div>
       </div>
     </div>
   </main>
-  <footer>
-    <button class="arrow-button" id="backward-button">◄</button>
-    <button class="arrow-button" id="forward-button">►</button>
-  </footer>
+
   <script src="main.js"></script>
 </body>
 </html>
